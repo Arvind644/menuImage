@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import ImageUploader from "./components/ImageUploader";
 import MenuItems from "./components/MenuItems";
 import { MenuItem } from "./types";
@@ -56,14 +57,24 @@ export default function Home() {
   };
 
   // This is a simplified version for our demo that doesn't support image regeneration
-  // In a full production app, you would implement this feature
   const handleMenuItemUpdate = (updatedItem: MenuItem, index: number) => {
     console.log("Image regeneration not supported in this simplified version");
   };
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <div className="min-h-screen p-8 bg-gray-50 flex flex-col">
       <header className="mb-10 text-center">
+        {/* Build Club Logo */}
+        <div className="flex justify-center mb-6">
+          <Image 
+            src="/buildclub-long.png" 
+            alt="Build Club Logo" 
+            width={300} 
+            height={60} 
+            className="h-auto"
+          />
+        </div>
+        
         <h1 className="text-4xl font-bold text-gray-800 mb-2">
           Menu<span className="text-blue-600">Image</span>
         </h1>
@@ -73,7 +84,7 @@ export default function Home() {
         </p>
       </header>
 
-      <main className="max-w-6xl mx-auto">
+      <main className="max-w-6xl mx-auto w-full flex-grow">
         <ImageUploader onUpload={handleImageUpload} isLoading={isLoading} />
         
         {error && (
@@ -112,14 +123,14 @@ export default function Home() {
             onItemUpdate={handleMenuItemUpdate}
           />
         )}
-        
-        <footer className="mt-16 text-center text-sm text-gray-500">
-          <p>Powered by <a href="https://together.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Together AI</a></p>
-          <p className="mt-1">
-            Using Llama 3.2 Vision, Llama 3.1 8B, and FLUX.1 Schnell
-          </p>
-        </footer>
       </main>
+        
+      <footer className="border-t py-4 bg-gray-50">
+          <div className="container mx-auto text-center text-sm text-gray-600">
+            <p>Powered by Together AI & Next.js</p>
+            <p className="mt-1">© 2025 <a href="https://buildclub.ai" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">Build Club</a>. All rights reserved.</p>
+          </div>
+        </footer>
     </div>
   );
 }
