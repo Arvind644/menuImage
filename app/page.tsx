@@ -57,7 +57,7 @@ export default function Home() {
   };
 
   // This is a simplified version for our demo that doesn't support image regeneration
-  const handleMenuItemUpdate = (updatedItem: MenuItem, index: number) => {
+  const handleMenuItemUpdate = () => {
     console.log("Image regeneration not supported in this simplified version");
   };
 
