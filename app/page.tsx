@@ -1,101 +1,125 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import ImageUploader from "./components/ImageUploader";
+import MenuItems from "./components/MenuItems";
+import { MenuItem } from "./types";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  const handleImageUpload = async (file: File) => {
+    setIsLoading(true);
+    setMenuItems([]);
+    setError(null);
+    
+    try {
+      // Create a URL for preview
+      const imageUrl = URL.createObjectURL(file);
+      setOriginalImage(imageUrl);
+
+      // Convert file to FormData
+      const formData = new FormData();
+      formData.append("menuImage", file);
+      
+      // Upload to our API route
+      console.log("Uploading menu image...");
+      const response = await fetch("/api/menu", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to extract menu items");
+      }
+      
+      const data = await response.json();
+      console.log("API Response:", data);
+      
+      if (data.menuItems && Array.isArray(data.menuItems)) {
+        console.log(`Received ${data.menuItems.length} menu items with images`);
+        setMenuItems(data.menuItems);
+      } else {
+        console.error("Unexpected response format:", data);
+        setError("Received an unexpected response format from the API");
+      }
+    } catch (error) {
+      console.error("Error extracting menu items:", error);
+      setError(error instanceof Error ? error.message : "Failed to extract menu items");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // This is a simplified version for our demo that doesn't support image regeneration
+  // In a full production app, you would implement this feature
+  const handleMenuItemUpdate = (updatedItem: MenuItem, index: number) => {
+    console.log("Image regeneration not supported in this simplified version");
+  };
+
+  return (
+    <div className="min-h-screen p-8 bg-gray-50">
+      <header className="mb-10 text-center">
+        <h1 className="text-4xl font-bold text-gray-800 mb-2">
+          Menu<span className="text-blue-600">Image</span>
+        </h1>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          Upload a picture of your restaurant menu and we'll generate beautiful images 
+          for each dish using Together AI's Llama 3.2 Vision and FLUX.1 Schnell.
+        </p>
+      </header>
+
+      <main className="max-w-6xl mx-auto">
+        <ImageUploader onUpload={handleImageUpload} isLoading={isLoading} />
+        
+        {error && (
+          <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{error}</p>
+            <p className="text-sm text-red-500 mt-2">
+              Please make sure you have set your Together API key in the .env.local file.
+            </p>
+          </div>
+        )}
+        
+        {originalImage && (
+          <div className="mt-8 p-4 bg-white rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">Original Menu</h2>
+            <div className="flex justify-center">
+              <img 
+                src={originalImage} 
+                alt="Uploaded menu" 
+                className="max-h-[500px] object-contain rounded border border-gray-200" 
+              />
+            </div>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="mt-8 text-center py-10">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+            <p className="mt-4 text-gray-600">Analyzing your menu and generating dish images...</p>
+            <p className="mt-2 text-sm text-gray-500">This may take a minute or two depending on the size and complexity of the menu.</p>
+          </div>
+        )}
+
+        {menuItems.length > 0 && (
+          <MenuItems 
+            items={menuItems} 
+            onItemUpdate={handleMenuItemUpdate}
+          />
+        )}
+        
+        <footer className="mt-16 text-center text-sm text-gray-500">
+          <p>Powered by <a href="https://together.ai" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Together AI</a></p>
+          <p className="mt-1">
+            Using Llama 3.2 Vision, Llama 3.1 8B, and FLUX.1 Schnell
+          </p>
+        </footer>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
